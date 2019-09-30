@@ -66,3 +66,5 @@ def file2matrix(filename):
     :param filename:
     :return:
     """
+    fr = open(filename)
+    array_online = fr.readlines()
