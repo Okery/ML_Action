@@ -1,18 +1,35 @@
 from CH2_KNN.KNN import *
 import matplotlib.pyplot as plt
+from numpy import *
 
 group, labels = create_data_set()
 
 print(group)
 
-print(labels)
 
-plt.figure()
+dating_data_mat, dating_labels = file2matrix('datingTestSet2.txt')
 
-plt.scatter(group[:, 0], group[:, 1])
+fig = plt.figure()
+
+ax = fig.add_subplot(111)
+
+ax.scatter(dating_data_mat[:, 1], dating_data_mat[:, 2],
+           15.0*array(dating_labels), 15.0*array(dating_labels))
 
 plt.show()
 
-cl = classify_2([0, 0], group, labels, 3)
+norm_mat, ranges, min_vals = auto_norm(dating_data_mat)
+#
+# print(norm_mat)
+#
+# print(ranges)
+#
+# print(min_vals)
 
-print(cl)
+
+# dating_calss_test()
+
+
+# classify_person()
+
+handwriting_class_test()

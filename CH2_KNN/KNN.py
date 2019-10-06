@@ -20,6 +20,7 @@
 import matplotlib.pyplot as plt
 import numpy as np
 import operator
+import os
 
 
 def create_data_set():
@@ -67,4 +68,103 @@ def file2matrix(filename):
     :return:
     """
     fr = open(filename)
+    # 读取文件所有行，返回列表
     array_online = fr.readlines()
+    # 获取行数
+    numbers_of_lines = len(array_online)
+    return_mat = np.zeros((numbers_of_lines, 3))
+    class_label_vector = []
+    index = 0
+    for line in array_online:
+        # 截取所有的回车字符
+        line = line.strip()
+        # 按照制表符进行数据切割
+        list_from_line = line.split("\t")
+        return_mat[index, :] = list_from_line[0:3]
+        class_label_vector.append(int(list_from_line[-1]))
+        index += 1
+
+    print(return_mat)
+
+    return return_mat, class_label_vector
+
+
+def auto_norm(data_set):
+    min_vals =data_set.min(0)
+    max_val = data_set.max(0)
+    ranges = max_val - min_vals
+    m = data_set.shape[0]
+    norm_data_set = data_set - np.tile(min_vals, (m, 1))
+    norm_data_set = norm_data_set/np.tile(ranges, (m, 1))
+
+    return norm_data_set, ranges, min_vals
+
+
+def dating_calss_test():
+    hoRatio = 0.10
+    dating_data_mat, dating_labels = file2matrix('datingTestSet2.txt')
+    norm_mat, ranges, min_val = auto_norm(dating_data_mat)
+    m = norm_mat.shape[0]
+    num_test_vecs = int(m * hoRatio)
+    error_count = 0.0
+    for i in range(num_test_vecs):
+        classifier_result = classify_0(norm_mat[i, :],
+                                       norm_mat[num_test_vecs:m, :],
+                                       dating_labels[num_test_vecs:m], 3)
+        print("the classifier came back with: %d, the real answer is : %d"
+              %(classifier_result, dating_labels[i]))
+        if(classifier_result != dating_labels[i]) : error_count += 1.0
+    print("the total errer rate is : %f" %(error_count/float(num_test_vecs)))
+
+
+def classify_person():
+    result_list = ['not at all', 'in small doses', 'in large doses']
+    from pip._vendor.distlib.compat import raw_input
+    percent_tats = float(raw_input("percentage of time spent playing video games?"))
+    ff_miles = float(raw_input("frequent flier miles earned per year?"))
+    ice_cream = float(raw_input("liters of ice cream consumed per year?"))
+    dating_data_mat, dating_labels = file2matrix('datingTestSet2.txt')
+    norm_mat, ranges, min_vlas = auto_norm(dating_data_mat)
+    in_arr = np.array([ff_miles, percent_tats, ice_cream])
+    classifier_result = classify_0((in_arr - min_vlas)/ranges,
+                                   norm_mat, dating_labels, 3)
+    print("you will probably like this person:",
+          result_list[classifier_result - 1])
+
+
+def img2vector(filename):
+    return_vect = np.zeros((1, 1024))
+    fr = open(filename)
+    for i in range(32):
+        line_str = fr.readline()
+        for j in range(32):
+            return_vect[0, 32 * i + j] = int(line_str[j])
+        return return_vect
+
+
+def handwriting_class_test():
+    hw_labels = []
+    training_file_list = os.listdir('trainingDigits')
+    m = len(training_file_list)
+    training_mat = np.zeros((m, 1024))
+    for i in range(m):
+        filename_str = training_file_list[i]
+        file_str = filename_str.split('.')[0]
+        class_num_str = int(file_str.split('_')[0])
+        hw_labels.append(class_num_str)
+        training_mat[i, :] = img2vector('trainingDigits/%s' % filename_str)
+    test_file_list = os.listdir('testDigits')
+    error_count = 0.0
+    m_test = len(test_file_list)
+    for i in range(m_test):
+        filename_str = test_file_list[i]
+        file_str = filename_str.split('.')[0]
+        class_num_str = int(file_str.split('_')[0])
+        vector_under_test = img2vector('testDigits/%s' % filename_str)
+        clasifier_result = classify_0(vector_under_test, training_mat, hw_labels, 3)
+        print("the classifier came back with %d, the real answer is %d"
+              % (clasifier_result, class_num_str))
+        if(clasifier_result != class_num_str): error_count += 1.0
+
+    print("\n the total number of error is %d", error_count)
+    print("\n the total error rate is %f", (error_count/float(m_test)))
